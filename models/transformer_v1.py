@@ -1,4 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# This Meti-DETR is based on the above Facebook DETR work. 
+
 """
 DETR Transformer class.
 
@@ -152,15 +154,14 @@ class TransformerEncoderLayer(nn.Module):
                      src_key_padding_mask: Optional[Tensor] = None,
                      pos: Optional[Tensor] = None):
         q = k = self.with_pos_embed(src, pos)
+        src0 = src   ### Miti-DETR
         src2 = self.self_attn(q, k, value=src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask)[0]
-
         src = src + self.dropout1(src2)
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
-        
-        #import pdb; pdb.set_trace()
-        src = src + self.dropout2(src2)
+        #src = src + self.dropout2(src2)
+        src = src0 + src + self.dropout2(src2)        ### Miti-DETR
         src = self.norm2(src)
         return src
 
@@ -169,13 +170,15 @@ class TransformerEncoderLayer(nn.Module):
                     src_key_padding_mask: Optional[Tensor] = None,
                     pos: Optional[Tensor] = None):
         src2 = self.norm1(src)
+        src0 = src2           ### Miti-DETR
         q = k = self.with_pos_embed(src2, pos)
         src2 = self.self_attn(q, k, value=src2, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask)[0]
         src = src + self.dropout1(src2)
         src2 = self.norm2(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src2))))
-        src = src + self.dropout2(src2)
+        #src = src + self.dropout2(src2)
+        src = src0 + src + self.dropout2(src2)      ### Miti-DETR
         return src
 
     def forward(self, src,
@@ -220,6 +223,7 @@ class TransformerDecoderLayer(nn.Module):
                      pos: Optional[Tensor] = None,
                      query_pos: Optional[Tensor] = None):
         q = k = self.with_pos_embed(tgt, query_pos)
+        tgt0 = tgt      ### Miti-DETR
         tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
         tgt = tgt + self.dropout1(tgt2)
@@ -231,7 +235,8 @@ class TransformerDecoderLayer(nn.Module):
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
-        tgt = tgt + self.dropout3(tgt2)
+        #tgt = tgt + self.dropout3(tgt2)
+        tgt = tgt0 + tgt + self.dropout3(tgt2)       ### Miti-DETR
         tgt = self.norm3(tgt)
         return tgt
 
@@ -243,6 +248,7 @@ class TransformerDecoderLayer(nn.Module):
                     pos: Optional[Tensor] = None,
                     query_pos: Optional[Tensor] = None):
         tgt2 = self.norm1(tgt)
+        tgt0 = tgt2      ### Miti-DETR
         q = k = self.with_pos_embed(tgt2, query_pos)
         tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
@@ -255,7 +261,8 @@ class TransformerDecoderLayer(nn.Module):
         tgt = tgt + self.dropout2(tgt2)
         tgt2 = self.norm3(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))
-        tgt = tgt + self.dropout3(tgt2)
+        #tgt = tgt + self.dropout3(tgt2)
+        tgt = tgt0 + tgt + self.dropout3(tgt2)             ### Miti-DETR
         return tgt
 
     def forward(self, tgt, memory,
